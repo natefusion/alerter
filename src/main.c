@@ -4,13 +4,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define SWAP(a,b,T) \
-    do {                                        \
-        T temp = a;                             \
-        a = b;                                  \
-        b = temp;                               \
-    } while (0)                                 \
-
 void sleep(int seconds) {
     if (seconds <= 0)
         return;
@@ -208,8 +201,11 @@ void alert_window(struct Alert *alert) {
     while(!WindowShouldClose()) {
         BeginDrawing(); {
             if (alert->flash)
-                if (frame % fps == 0 || frame % (fps/2) == 0)
-                    SWAP(alert->background_color, alert->text_color, Color);
+                if (frame % fps == 0 || frame % (fps/2) == 0) {
+                    Color temp = alert->background_color;
+                    alert->background_color = alert->text_color;
+                    alert->text_color = temp;
+                }
             
             ClearBackground(alert->background_color);            
             DrawTextCentered(alert->message, 0, 0, 75, alert->text_color);
