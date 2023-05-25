@@ -61,53 +61,6 @@ void DrawTextCentered(const char * text, int fontSize, Color color) {
     DrawText(text, posX, posY, fontSize, color);
 }
 
-int DrawWindow(const char * message, Color background_color, Color text_color, int flash, int can_repeat, int given_time, const char * time_unit) {
-    int should_sleep = 0;
-    InitWindow(0, 0, "ALERT!");
-
-    int fps = GetMonitorRefreshRate(GetCurrentMonitor()) / 6;
-    SetTargetFPS(fps);
-
-    SetWindowState(FLAG_WINDOW_MAXIMIZED);
-    
-    int fontsize = 50;
-    int frame = 1;
-
-    int height = GetScreenHeight();
-
-    while(!WindowShouldClose()) {
-        BeginDrawing(); {
-            if (flash)
-                if (frame % fps == 0 || frame % (fps/2) == 0)
-                    SWAP(background_color, text_color, Color);
-            
-            ClearBackground(background_color);            
-            DrawTextCentered(message, fontsize, text_color);
-            if (can_repeat) {
-                DrawTextCentered_X(TextFormat("Press Y to Repeat for %d %s or Press Q to Quit", given_time, time_unit), height / 1.5, 30, text_color);
-            
-                if (IsKeyPressed(KEY_Y)) {
-                    should_sleep = 1;
-                    break;
-                }
-            } else {
-                DrawTextCentered_X("Press Q to Quit", height / 1.5, 30, text_color);
-            }
-            
-            if (IsKeyPressed(KEY_Q)) {
-                should_sleep = 0;
-                break;
-            }
-        } EndDrawing();
-
-        ++frame;
-    }
-
-    CloseWindow();
-
-    return should_sleep;
-}
-
 int main(int argc, char **argv) {
     SetTraceLogLevel(LOG_NONE);
 
@@ -224,7 +177,49 @@ int main(int argc, char **argv) {
     int should_sleep = 0;
     do {
         sleep(timer_length_seconds);
-        should_sleep = DrawWindow(message, background_color, text_color, flash, timer_length_seconds > 0, given_time, time_unit);
+
+        InitWindow(0, 0, "ALERT!");
+
+        int fps = GetMonitorRefreshRate(GetCurrentMonitor()) / 6;
+        SetTargetFPS(fps);
+
+        SetWindowState(FLAG_WINDOW_MAXIMIZED);
+    
+        int fontsize = 50;
+        int frame = 1;
+
+        int height = GetScreenHeight();
+
+        while(!WindowShouldClose()) {
+            BeginDrawing(); {
+                if (flash)
+                    if (frame % fps == 0 || frame % (fps/2) == 0)
+                        SWAP(background_color, text_color, Color);
+            
+                ClearBackground(background_color);            
+                DrawTextCentered(message, fontsize, text_color);
+                if (timer_length_seconds > 0) {
+                    DrawTextCentered_X(TextFormat("Press Y to Repeat for %d %s or Press Q to Quit",
+                                                  given_time, time_unit), height / 1.5, 30, text_color);
+            
+                    if (IsKeyPressed(KEY_Y)) {
+                        should_sleep = 1;
+                        break;
+                    }
+                } else {
+                    DrawTextCentered_X("Press Q to Quit", height / 1.5, 30, text_color);
+                }
+            
+                if (IsKeyPressed(KEY_Q)) {
+                    should_sleep = 0;
+                    break;
+                }
+            } EndDrawing();
+
+            ++frame;
+        }
+
+        CloseWindow();
     } while (should_sleep && timer_length_seconds);
 
     return 0;
