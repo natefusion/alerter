@@ -3,17 +3,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-void sleep(int seconds) {
-    if (seconds <= 0)
-        return;
-    
-    clock_t now = clock();
-    int seconds_elapsed = 0;
-    do {
-        seconds_elapsed = (int)((clock() - now) / CLOCKS_PER_SEC);
-    } while (seconds_elapsed < seconds);
-}
+#include <unistd.h>
 
 const char *helpmsg =
     "NAME\n"
