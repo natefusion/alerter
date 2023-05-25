@@ -21,14 +21,14 @@ void sleep(int seconds) {
 }
 
 const char * helpmsg =
-    "Name\n"
-    "\talerter - a very noticible alerter on a timer\n"
+    "NAME\n"
+    "\talerter - a very noticible alerter with timer\n"
     "\n"
-    "Options:\n"
+    "OPTIONS:\n"
     "message [message]\n"
     "\tThe message to say\n"
     "\n"
-    "for [integer] [hour(s)|minute(s)|second(s)]\n"
+    "sleep [integer] [hour(s)|minute(s)|second(s)]\n"
     "\t When should the program activate and if it should repeat\n"
     "\n"
     "background [RED|GREEN|BLUE|WHITE|BLACK|YELLOW]\n"
@@ -36,28 +36,19 @@ const char * helpmsg =
     "\n"
     "text [RED|GREEN|BLUE|WHITE|BLACK|YELLOW]\n"
     "\t Chooses a color for the text\n"
-    "flash"
+    "\n"
+    "flash\n"
     "\t If written, the screen will flash\n"
     "\n"
-    "EXAMPLES: "
-    "\n"
-    "alerter message \"Tea is ready\" for 2 minutes and stop"
-    "\n"
-    "alerter message \"Take a break\" for 1 hour and repeat"
-    "\n";
+    "EXAMPLES: \n"
+    "\talerter message \"Tea is ready\" sleep 2 minutes\n"
+    "\talerter message \"Take a break\" background red text blue flash sleep 1 hour\n";
 
-void DrawTextCentered_X(const char * text, int posY, int fontSize, Color color) {
-    int monitor = GetCurrentMonitor();
-    int textsize = MeasureText(text, fontSize) / 2;    
-    int posX = GetMonitorWidth(monitor) / 2.0f - textsize;
-    DrawText(text, posX, posY, fontSize, color);
-}
-
-void DrawTextCentered(const char * text, int fontSize, Color color) {
+void DrawTextCentered(const char * text, float offsetX, float offsetY, int fontSize, Color color) {
     int monitor = GetCurrentMonitor();
     int textsize = MeasureText(text, fontSize) / 2;
-    int posX = GetMonitorWidth(monitor) / 2.0f - textsize;
-    int posY = GetMonitorHeight(monitor) / 2.0f - textsize;
+    int posX = GetMonitorWidth(monitor) / 2.0f - textsize + offsetX * textsize;
+    int posY = GetMonitorHeight(monitor) / 2.0f - fontSize + offsetY * fontSize;
     DrawText(text, posX, posY, fontSize, color);
 }
 
@@ -132,9 +123,9 @@ int main(int argc, char **argv) {
             }
         } else if (TextIsEqual(argv[arg_index], "flash")) {
             flash = 1;
-        } else if (TextIsEqual(argv[arg_index], "for")) {
+        } else if (TextIsEqual(argv[arg_index], "sleep")) {
             if (arg_index + 2 >= argc) {
-                fprintf(stderr, "malformed 'for' argument\n");
+                fprintf(stderr, "malformed 'sleep' argument\n");
                 return 1;
             }
 
@@ -185,10 +176,7 @@ int main(int argc, char **argv) {
 
         SetWindowState(FLAG_WINDOW_MAXIMIZED);
     
-        int fontsize = 50;
         int frame = 1;
-
-        int height = GetScreenHeight();
 
         while(!WindowShouldClose()) {
             BeginDrawing(); {
@@ -197,18 +185,22 @@ int main(int argc, char **argv) {
                         SWAP(background_color, text_color, Color);
             
                 ClearBackground(background_color);            
-                DrawTextCentered(message, fontsize, text_color);
+                DrawTextCentered(message, 0, 0, 75, text_color);
+                DrawTextCentered("Press F to toggle flashing", 0, 4, 30, text_color);
                 if (timer_length_seconds > 0) {
-                    DrawTextCentered_X(TextFormat("Press Y to Repeat for %d %s or Press Q to Quit",
-                                                  given_time, time_unit), height / 1.5, 30, text_color);
+                    DrawTextCentered(TextFormat("Press Y to Ignore for %d %s or Press Q to Quit",
+                                                given_time, time_unit), 0, 6, 30, text_color);
             
                     if (IsKeyPressed(KEY_Y)) {
                         should_sleep = 1;
                         break;
                     }
                 } else {
-                    DrawTextCentered_X("Press Q to Quit", height / 1.5, 30, text_color);
+                    DrawTextCentered("Press Q to Quit", 0, 6, 30, text_color);
                 }
+
+                if (IsKeyPressed(KEY_F))
+                    flash = !flash;
             
                 if (IsKeyPressed(KEY_Q)) {
                     should_sleep = 0;
