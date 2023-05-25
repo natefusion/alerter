@@ -1,6 +1,8 @@
 #include <raylib.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 #define SWAP(a,b,T) \
     do {                                        \
@@ -20,7 +22,7 @@ void sleep(int seconds) {
     } while (seconds_elapsed < seconds);
 }
 
-const char * helpmsg =
+const char *helpmsg =
     "NAME\n"
     "\talerter - a very noticible alerter with timer\n"
     "\n"
@@ -52,167 +54,205 @@ void DrawTextCentered(const char * text, float offsetX, float offsetY, int fontS
     DrawText(text, posX, posY, fontSize, color);
 }
 
-int main(int argc, char **argv) {
-    SetTraceLogLevel(LOG_NONE);
+void err_and_die(const char *msg) {
+    fprintf(stderr, "ERROR: %s\n%s", msg, helpmsg);
+    exit(1);
+}
 
-    // begin arg parsing
+enum Time_Unit {
+    SECOND = 1,
+    MINUTE = 60,
+    HOUR = 3600,
+};
 
-    if (argc <= 1) {
-        puts(helpmsg);
-        return 1;
+char *time_unit_tostring(enum Time_Unit tu, bool is_plural) {
+    switch (tu) {
+    case SECOND:
+        if (is_plural)
+            return "SECONDS";
+        else
+            return "SECOND";
+    case MINUTE:
+        if (is_plural)
+            return "MINUTES";
+        else
+            return "MINUTE";
+    case HOUR:
+        if (is_plural)
+            return "HOURS";
+        else
+            return "HOUR";
+    default:
+        return "";
     }
+}
 
-    const char *message = "ALERT!";
-    Color background_color = RAYWHITE;
-    Color text_color = BLACK;
-    int flash = 0;
-    int timer_length_seconds = 0;
-    int given_time = 0;
-    const char * time_unit = "";
+struct Alert {
+    char *message;
+    Color background_color;
+    Color text_color;
+    bool flash;
+    int raw_time;
+    bool wants_to_sleep;
+    enum Time_Unit raw_time_unit;
+};
+
+struct Alert make_alert(void) {
+    return (struct Alert) {
+        .message = "Alert!",
+        .background_color = RAYWHITE,
+        .text_color = BLACK,
+        .flash = false,
+        .raw_time = 0,
+        .wants_to_sleep = false,
+        .raw_time_unit = SECOND
+    };
+}
+
+struct Alert parse_args(int argc, char **argv) {
+    if (argc <= 1)
+        err_and_die("");
+    
+    struct Alert alert = make_alert();
 
     for (int arg_index = 1; arg_index < argc; ++arg_index) {
         if (TextIsEqual(argv[arg_index], "message")) {
-            message = argv[++arg_index];
+            alert.message = argv[++arg_index];
         } else if (TextIsEqual(argv[arg_index], "background")) {
-            if (arg_index + 1 >= argc) {
-                fprintf(stderr, "No color provided after 'background'\n");
-                return 1;
-            }
+            if (arg_index + 1 >= argc)
+                err_and_die("No color provided after 'background'\n");
 
             ++arg_index;
 
             if (TextIsEqual(argv[arg_index], "red"))
-                background_color = RED;
+                alert.background_color = RED;
             else if (TextIsEqual(argv[arg_index], "green"))
-                background_color = GREEN;
+                alert.background_color = GREEN;
             else if (TextIsEqual(argv[arg_index], "blue"))
-                background_color = BLUE;
+                alert.background_color = BLUE;
             else if (TextIsEqual(argv[arg_index], "white"))
-                background_color = WHITE;
+                alert.background_color = WHITE;
             else if (TextIsEqual(argv[arg_index], "black"))
-                background_color = BLACK;
+                alert.background_color = BLACK;
             else if (TextIsEqual(argv[arg_index], "yellow"))
-                background_color = YELLOW;
+                alert.background_color = YELLOW;
             else {
-                fprintf(stderr, "Invalid background color: %s\n", argv[arg_index]);
-                return 1;
+                err_and_die(TextFormat("Invalid background color: %s\n", argv[arg_index]));
             }
         } else if (TextIsEqual(argv[arg_index], "text")) {
-            if (arg_index + 1 >= argc) {
-                fprintf(stderr, "No color provided after 'text'\n");
-                return 1;
-            }
+            if (arg_index + 1 >= argc)
+                err_and_die("No color provided after 'text'\n");
 
             ++arg_index;
 
             if (TextIsEqual(argv[arg_index], "red"))
-                text_color = RED;
+                alert.text_color = RED;
             else if (TextIsEqual(argv[arg_index], "green"))
-                text_color = GREEN;
+                alert.text_color = GREEN;
             else if (TextIsEqual(argv[arg_index], "blue"))
-                text_color = BLUE;
+                alert.text_color = BLUE;
             else if (TextIsEqual(argv[arg_index], "white"))
-                text_color = WHITE;
+                alert.text_color = WHITE;
             else if (TextIsEqual(argv[arg_index], "black"))
-                text_color = BLACK;
+                alert.text_color = BLACK;
             else if (TextIsEqual(argv[arg_index], "yellow"))
-                text_color = YELLOW;
+                alert.text_color = YELLOW;
             else {
-                fprintf(stderr, "Invalid text color: %s\n", argv[arg_index]);
-                return 1;
+                err_and_die(TextFormat("Invalid text color: %s\n", argv[arg_index]));
             }
         } else if (TextIsEqual(argv[arg_index], "flash")) {
-            flash = 1;
+            alert.flash = true;
         } else if (TextIsEqual(argv[arg_index], "sleep")) {
             if (arg_index + 2 >= argc) {
-                fprintf(stderr, "malformed 'sleep' argument\n");
-                return 1;
+                err_and_die("malformed 'sleep' argument\n");
             }
 
-            // error checking how????
-            given_time = TextToInteger(argv[++arg_index]);
-
-            if (given_time <= 0) {
-                fprintf(stderr, "time should be a positive number but got: %d\n", given_time);
-                return 1;
-            }
+            int time = TextToInteger(argv[++arg_index]);
+            if (time <= 0)
+                err_and_die(TextFormat("time should be a positive number but got: %d\n", time));
+            alert.raw_time = time;
+            alert.wants_to_sleep = true;
                                      
             ++arg_index;
             
-            int multiplier = 1;
-            time_unit = argv[arg_index];
-            
             if (TextIsEqual(argv[arg_index], "hour") ||
                 TextIsEqual(argv[arg_index], "hours"))
-                multiplier = 60 * 60;
+                alert.raw_time_unit = HOUR;
             else if (TextIsEqual(argv[arg_index], "minute") ||
                      TextIsEqual(argv[arg_index], "minutes"))
-                multiplier = 60;
+                alert.raw_time_unit = MINUTE;
             else if (TextIsEqual(argv[arg_index], "second") ||
                      TextIsEqual(argv[arg_index], "seconds"))
-                multiplier = 1;
+                alert.raw_time_unit = SECOND;
             else {
-                fprintf(stderr, "In for argument: You must choose between hour(s), minute(s), or second(s). Got: %s\n" , argv[arg_index]);
-                return 1;
+                err_and_die(TextFormat("In for argument: You must choose between hour(s), minute(s), or second(s). Got: %s\n" , argv[arg_index]));
             }
-
-            timer_length_seconds = given_time * multiplier;
         } else {
-            fprintf(stderr, "did not expect: %s\n", argv[arg_index]);
-            return 1;
+            err_and_die(TextFormat("did not expect: %s\n", argv[arg_index]));
         }
     }
 
-    // end arg parsing
+    return alert;
+}
 
-    int should_sleep = 0;
-    do {
-        sleep(timer_length_seconds);
+void alert_window(struct Alert *alert) {
+    InitWindow(0, 0, "ALERT!");
 
-        InitWindow(0, 0, "ALERT!");
+    int fps = GetMonitorRefreshRate(GetCurrentMonitor()) / 6;
+    SetTargetFPS(fps);
 
-        int fps = GetMonitorRefreshRate(GetCurrentMonitor()) / 6;
-        SetTargetFPS(fps);
-
-        SetWindowState(FLAG_WINDOW_MAXIMIZED);
+    SetWindowState(FLAG_WINDOW_MAXIMIZED);
     
-        int frame = 1;
+    int frame = 1;
 
-        while(!WindowShouldClose()) {
-            BeginDrawing(); {
-                if (flash)
-                    if (frame % fps == 0 || frame % (fps/2) == 0)
-                        SWAP(background_color, text_color, Color);
+    while(!WindowShouldClose()) {
+        BeginDrawing(); {
+            if (alert->flash)
+                if (frame % fps == 0 || frame % (fps/2) == 0)
+                    SWAP(alert->background_color, alert->text_color, Color);
             
-                ClearBackground(background_color);            
-                DrawTextCentered(message, 0, 0, 75, text_color);
-                DrawTextCentered("Press F to toggle flashing", 0, 4, 30, text_color);
-                if (timer_length_seconds > 0) {
-                    DrawTextCentered(TextFormat("Press Y to Ignore for %d %s or Press Q to Quit",
-                                                given_time, time_unit), 0, 6, 30, text_color);
+            ClearBackground(alert->background_color);            
+            DrawTextCentered(alert->message, 0, 0, 75, alert->text_color);
+            DrawTextCentered("Press F to toggle flashing", 0, 4, 30, alert->text_color);
+            if (alert->raw_time > 0) {
+                DrawTextCentered(TextFormat("Press SPACE to ignore alert for %d %s or Press Q to Quit",
+                                            alert->raw_time, time_unit_tostring(alert->raw_time_unit, alert->raw_time > 1)),
+                                 0, 6, 30, alert->text_color);
             
-                    if (IsKeyPressed(KEY_Y)) {
-                        should_sleep = 1;
-                        break;
-                    }
-                } else {
-                    DrawTextCentered("Press Q to Quit", 0, 6, 30, text_color);
-                }
-
-                if (IsKeyPressed(KEY_F))
-                    flash = !flash;
-            
-                if (IsKeyPressed(KEY_Q)) {
-                    should_sleep = 0;
+                if (IsKeyPressed(KEY_SPACE)) {
+                    alert->wants_to_sleep = true;
                     break;
                 }
-            } EndDrawing();
+            } else {
+                DrawTextCentered("Press Q to Quit", 0, 6, 30, alert->text_color);
+            }
 
-            ++frame;
-        }
+            if (IsKeyPressed(KEY_F))
+                alert->flash = !alert->flash;
+            
+            if (IsKeyPressed(KEY_Q)) {
+                alert->wants_to_sleep = false;
+                break;
+            }
+        } EndDrawing();
 
-        CloseWindow();
-    } while (should_sleep && timer_length_seconds);
+        ++frame;
+    }
+
+    CloseWindow();
+    
+    return;
+}
+
+int main(int argc, char **argv) {
+    SetTraceLogLevel(LOG_NONE);
+    struct Alert alert = parse_args(argc, argv);
+
+    do {
+        sleep(alert.raw_time * alert.raw_time_unit);
+
+        alert_window(&alert);
+    } while (alert.wants_to_sleep && alert.raw_time > 0);
 
     return 0;
 }
