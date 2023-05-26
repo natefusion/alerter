@@ -56,19 +56,19 @@ char *time_unit_tostring(enum Time_Unit tu, bool is_plural) {
     switch (tu) {
     case SECOND:
         if (is_plural)
-            return "SECONDS";
+            return "Seconds";
         else
-            return "SECOND";
+            return "Second";
     case MINUTE:
         if (is_plural)
-            return "MINUTES";
+            return "Minutes";
         else
-            return "MINUTE";
+            return "Minute";
     case HOUR:
         if (is_plural)
-            return "HOURS";
+            return "Hours";
         else
-            return "HOUR";
+            return "Hour";
     default:
         return "";
     }
