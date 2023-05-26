@@ -10,7 +10,7 @@ mkdir:
 
 SRC = $(wildcard src/*.c)
 CC = gcc
-FLAGS = -Wall -pipe 
+FLAGS = -Wall -pipe
 FLAGS += -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 debug: OUTPUT = $(DEBUG)
 # Non production ready flags (as of 2021-09-01), https://github.com/google/sanitizers/issues/1324: -fsanitize=pointer-compare -fsanitize=pointer-subtract
@@ -18,6 +18,7 @@ debug: OUTPUT = $(DEBUG)
 debug: executable
 
 release: OUTPUT = $(RELEASE)
+release: FLAGS += -O2
 release: executable
 
 executable: $(SRC)
