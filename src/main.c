@@ -74,8 +74,10 @@ char *time_unit_tostring(enum Time_Unit tu, bool is_plural) {
     }
 }
 
+#define MESSAGE_SIZE 255
+
 struct Alert {
-    char message[255];
+    char message[MESSAGE_SIZE];
     Color background_color;
     Color text_color;
     bool flash;
@@ -187,7 +189,6 @@ bool make_alert_window(struct Alert *alert) {
     InitWindow(800, 600, "Make alert");
     SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()) / 6);
 
-    char buffer[100] = "";
     int fontsize = 50;
 
     const char *message = "Message:";
@@ -238,7 +239,7 @@ bool make_alert_window(struct Alert *alert) {
             ClearBackground(RAYWHITE);
 
             GuiDrawText(message, (Rectangle){ .x=10, .y=50, .width=message_width, .height=fontsize }, 0, BLACK);
-            if (GuiTextBox((Rectangle){ .x=10+background_width+10, .y=50, .width=400, .height=fontsize }, buffer, 100, message_edit_mode))
+            if (GuiTextBox((Rectangle){ .x=10+background_width+10, .y=50, .width=400, .height=fontsize }, alert->message, MESSAGE_SIZE, message_edit_mode))
                 message_edit_mode = !message_edit_mode;
 
             GuiDrawText(flash, (Rectangle){ .x=10, .y=50+fontsize+10, .width=flash_width, .height=fontsize }, 0, BLACK);
@@ -324,8 +325,6 @@ bool make_alert_window(struct Alert *alert) {
     }
 
     alert->raw_time = raw_time;
-
-    TextCopy(alert->message, buffer);
 
     CloseWindow();
 
