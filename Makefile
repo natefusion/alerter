@@ -10,7 +10,7 @@ mkdir:
 
 SRC = $(wildcard src/*.c)
 CC = gcc
-FLAGS = -Wall -pipe -O2
+FLAGS = -Wall -pipe 
 FLAGS += -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 debug: OUTPUT = $(DEBUG)
 # Non production ready flags (as of 2021-09-01), https://github.com/google/sanitizers/issues/1324: -fsanitize=pointer-compare -fsanitize=pointer-subtract
