@@ -337,7 +337,7 @@ void alert_window(struct Alert *alert) {
     int fps = GetMonitorRefreshRate(GetCurrentMonitor()) / 6;
     SetTargetFPS(fps);
 
-    SetWindowState(FLAG_WINDOW_MAXIMIZED);
+    SetWindowState(FLAG_WINDOW_TOPMOST);
     
     int frame = 1;
 
