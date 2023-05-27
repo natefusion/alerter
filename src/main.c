@@ -191,12 +191,7 @@ bool make_alert_window(struct Alert *alert) {
 
     int fontsize = 50;
 
-    const char *message = "Message:";
-    int message_width = MeasureText(message, fontsize);
     bool message_edit_mode = false;
-
-    const char *flash = "Flash: ";
-    int flash_width = MeasureText(flash, fontsize);
 
     const char *background_colors = "White;Black;Red;Green;Blue;Yellow";
     const char *text_colors = "Black;White;Red;Green;Blue;Yellow";
@@ -208,8 +203,6 @@ bool make_alert_window(struct Alert *alert) {
     bool background_edit_mode = false;
     int background_color = 0;
 
-    const char *text = "Text:";
-    int text_width = MeasureText(text, fontsize);
     bool text_edit_mode = false;
     int text_color = 0;
 
@@ -238,11 +231,11 @@ bool make_alert_window(struct Alert *alert) {
         BeginDrawing(); {
             ClearBackground(RAYWHITE);
 
-            GuiDrawText(message, (Rectangle){ .x=10, .y=50, .width=message_width, .height=fontsize }, 0, BLACK);
+            DrawText("Message:", 10, 50, fontsize, BLACK);
             if (GuiTextBox((Rectangle){ .x=10+background_width+10, .y=50, .width=400, .height=fontsize }, alert->message, MESSAGE_SIZE, message_edit_mode))
                 message_edit_mode = !message_edit_mode;
 
-            GuiDrawText(flash, (Rectangle){ .x=10, .y=50+fontsize+10, .width=flash_width, .height=fontsize }, 0, BLACK);
+            DrawText("Flash:", 10, 50+(fontsize+10)*1, fontsize, BLACK);
             alert->flash = GuiCheckBox((Rectangle){ .x=10+background_width+10, .y=50+fontsize+10, .width=fontsize, .height=fontsize }, "", alert->flash);
 
             if (GuiButton((Rectangle){ .x=10, .y=50+(fontsize+10)*5, .width=run_width, .height=fontsize }, run)) {
@@ -255,17 +248,17 @@ bool make_alert_window(struct Alert *alert) {
                 break;
             }
 
-            GuiDrawText(sleep, (Rectangle){ .x=10, .y=50+(fontsize+10)*4, .width=sleep_width, .height=fontsize }, 0, BLACK);
+            DrawText(sleep, 10, 50+(fontsize+10)*4, fontsize, BLACK);
             if (GuiValueBox((Rectangle){ .x=20+background_width, .y=50+(fontsize+10)*4, .width=sleep_width, .height=fontsize }, "", &raw_time, 0, 1000, sleep_edit_mode))
                 sleep_edit_mode = !sleep_edit_mode;
             if (GuiDropdownBox((Rectangle){ .x=20+background_width+(sleep_width+10), .y=50+(fontsize+10)*4, .width=unit_width, .height=fontsize }, units, &which_unit, unit_edit_mode))
                 unit_edit_mode = !unit_edit_mode;
 
-            GuiDrawText(text, (Rectangle){ .x=10, .y=50+(fontsize+10)*3, .width=text_width, .height=fontsize }, 0, BLACK);
+            DrawText("Text:", 10, 50+(fontsize+10)*3, fontsize, BLACK);
             if (GuiDropdownBox((Rectangle){ .x=20+background_width, .y=50+(fontsize+10)*3, .width=dropdown_width, .height=fontsize }, text_colors, &text_color, text_edit_mode))
                 text_edit_mode = !text_edit_mode;
-            
-            GuiDrawText(background, (Rectangle){ .x=10, .y=50+(fontsize+10)*2, .width=background_width, .height=fontsize }, 0, BLACK);
+
+            DrawText(background, 10, 50+(fontsize+10)*2, fontsize, BLACK);
             if (GuiDropdownBox((Rectangle){ .x=10+background_width+10, .y=50+(fontsize+10)*2, .width=dropdown_width, .height=fontsize }, background_colors, &background_color, background_edit_mode))
                 background_edit_mode = !background_edit_mode;
         } EndDrawing();
@@ -322,6 +315,7 @@ bool make_alert_window(struct Alert *alert) {
         break;
     case 2:
         alert->raw_time_unit = SECOND;
+        break;
     }
 
     alert->raw_time = raw_time;
