@@ -8,8 +8,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
 
-
-
 const char *helpmsg =
     "NAME\n"
     "\talerter - a very noticible alerter with timer\n"
@@ -97,17 +95,12 @@ struct Alert make_alert(void) {
     alert.raw_time_unit = SECOND;
 
     return alert;
-
 }
 
-struct Alert parse_args(int argc, char **argv) {
-    struct Alert alert = make_alert();
-    if (argc <= 1)
-        return alert;
-
+void parse_args(int argc, char **argv, struct Alert *alert) {
     for (int arg_index = 1; arg_index < argc; ++arg_index) {
         if (TextIsEqual(argv[arg_index], "message")) {
-            TextCopy(alert.message, argv[++arg_index]);
+            TextCopy(alert->message, argv[++arg_index]);
         } else if (TextIsEqual(argv[arg_index], "background")) {
             if (arg_index + 1 >= argc)
                 err_and_die("No color provided after 'background'\n");
@@ -115,17 +108,17 @@ struct Alert parse_args(int argc, char **argv) {
             ++arg_index;
 
             if (TextIsEqual(argv[arg_index], "red"))
-                alert.background_color = RED;
+                alert->background_color = RED;
             else if (TextIsEqual(argv[arg_index], "green"))
-                alert.background_color = GREEN;
+                alert->background_color = GREEN;
             else if (TextIsEqual(argv[arg_index], "blue"))
-                alert.background_color = BLUE;
+                alert->background_color = BLUE;
             else if (TextIsEqual(argv[arg_index], "white"))
-                alert.background_color = WHITE;
+                alert->background_color = WHITE;
             else if (TextIsEqual(argv[arg_index], "black"))
-                alert.background_color = BLACK;
+                alert->background_color = BLACK;
             else if (TextIsEqual(argv[arg_index], "yellow"))
-                alert.background_color = YELLOW;
+                alert->background_color = YELLOW;
             else {
                 err_and_die(TextFormat("Invalid background color: %s\n", argv[arg_index]));
             }
@@ -136,22 +129,22 @@ struct Alert parse_args(int argc, char **argv) {
             ++arg_index;
 
             if (TextIsEqual(argv[arg_index], "red"))
-                alert.text_color = RED;
+                alert->text_color = RED;
             else if (TextIsEqual(argv[arg_index], "green"))
-                alert.text_color = GREEN;
+                alert->text_color = GREEN;
             else if (TextIsEqual(argv[arg_index], "blue"))
-                alert.text_color = BLUE;
+                alert->text_color = BLUE;
             else if (TextIsEqual(argv[arg_index], "white"))
-                alert.text_color = WHITE;
+                alert->text_color = WHITE;
             else if (TextIsEqual(argv[arg_index], "black"))
-                alert.text_color = BLACK;
+                alert->text_color = BLACK;
             else if (TextIsEqual(argv[arg_index], "yellow"))
-                alert.text_color = YELLOW;
+                alert->text_color = YELLOW;
             else {
                 err_and_die(TextFormat("Invalid text color: %s\n", argv[arg_index]));
             }
         } else if (TextIsEqual(argv[arg_index], "flash")) {
-            alert.flash = true;
+            alert->flash = true;
         } else if (TextIsEqual(argv[arg_index], "sleep")) {
             if (arg_index + 2 >= argc) {
                 err_and_die("malformed 'sleep' argument\n");
@@ -160,20 +153,20 @@ struct Alert parse_args(int argc, char **argv) {
             int time = TextToInteger(argv[++arg_index]);
             if (time <= 0)
                 err_and_die(TextFormat("time should be a positive number but got: %d\n", time));
-            alert.raw_time = time;
-            alert.wants_to_sleep = true;
+            alert->raw_time = time;
+            alert->wants_to_sleep = true;
                                      
             ++arg_index;
             
             if (TextIsEqual(argv[arg_index], "hour") ||
                 TextIsEqual(argv[arg_index], "hours"))
-                alert.raw_time_unit = HOUR;
+                alert->raw_time_unit = HOUR;
             else if (TextIsEqual(argv[arg_index], "minute") ||
                      TextIsEqual(argv[arg_index], "minutes"))
-                alert.raw_time_unit = MINUTE;
+                alert->raw_time_unit = MINUTE;
             else if (TextIsEqual(argv[arg_index], "second") ||
                      TextIsEqual(argv[arg_index], "seconds"))
-                alert.raw_time_unit = SECOND;
+                alert->raw_time_unit = SECOND;
             else {
                 err_and_die(TextFormat("In for argument: You must choose between hour(s), minute(s), or second(s). Got: %s\n" , argv[arg_index]));
             }
@@ -181,8 +174,6 @@ struct Alert parse_args(int argc, char **argv) {
             err_and_die(TextFormat("did not expect: %s\n", argv[arg_index]));
         }
     }
-
-    return alert;
 }
 
 bool make_alert_window(struct Alert *alert) {
@@ -312,6 +303,8 @@ void alert_window(struct Alert *alert) {
     
     int frame = 1;
 
+    alert->wants_to_sleep = false;
+
     while(!WindowShouldClose()) {
         BeginDrawing(); {
             if (alert->flash)
@@ -356,15 +349,19 @@ void alert_window(struct Alert *alert) {
 
 int main(int argc, char **argv) {
     SetTraceLogLevel(LOG_NONE);
-    struct Alert alert = parse_args(argc, argv);
+    struct Alert alert = make_alert();
 
-    if (argc <= 1)
-        if (!make_alert_window(&alert))
-            return 0;
+    bool should_run = true;
+    if (argc > 1)
+        parse_args(argc, argv, &alert);
+    else
+        should_run = make_alert_window(&alert);
+
+    if (!should_run)
+        return 0;
 
     do {
         sleep(alert.raw_time * alert.raw_time_unit);
-
         alert_window(&alert);
     } while (alert.wants_to_sleep && alert.raw_time > 0);
 
