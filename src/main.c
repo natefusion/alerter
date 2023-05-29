@@ -189,8 +189,7 @@ bool make_alert_window(struct Alert *alert) {
 
     bool message_edit_mode = false;
 
-    const char *background_colors = "White;Black;Red;Green;Blue;Yellow";
-    const char *text_colors = "Black;White;Red;Green;Blue;Yellow";
+    const char *colors = "White;Black;Red;Green;Blue;Yellow";
     
     int dropdown_width = MeasureText("Yellow", fontsize) + 15;
 
@@ -199,7 +198,7 @@ bool make_alert_window(struct Alert *alert) {
     int background_color = 0;
 
     bool text_edit_mode = false;
-    int text_color = 0;
+    int text_color = 1;
 
     bool sleep_edit_mode = false;
 
@@ -227,8 +226,8 @@ bool make_alert_window(struct Alert *alert) {
             if (GuiButton((Rectangle)             { x,                           y+yHeight*5, 100,            height }, "Run")) { should_run = true; break; }
             if (GuiValueBox((Rectangle)           { max_width,                   y+yHeight*4, dropdown_width, height }, "", &alert->raw_time, 0, 1000, sleep_edit_mode)) { sleep_edit_mode = !sleep_edit_mode; }
             if (GuiDropdownBox((Rectangle)        { max_width+dropdown_width+10, y+yHeight*4, unit_width,     height }, units, &which_unit, unit_edit_mode)) { unit_edit_mode = !unit_edit_mode; }
-            if (GuiDropdownBox((Rectangle)        { max_width,                   y+yHeight*3, dropdown_width, height }, text_colors, &text_color, text_edit_mode)) { text_edit_mode = !text_edit_mode; }
-            if (GuiDropdownBox((Rectangle)        { max_width,                   y+yHeight*2, dropdown_width, height }, background_colors, &background_color, background_edit_mode)) { background_edit_mode = !background_edit_mode; }
+            if (GuiDropdownBox((Rectangle)        { max_width,                   y+yHeight*3, dropdown_width, height }, colors, &text_color, text_edit_mode)) { text_edit_mode = !text_edit_mode; }
+            if (GuiDropdownBox((Rectangle)        { max_width,                   y+yHeight*2, dropdown_width, height }, colors, &background_color, background_edit_mode)) { background_edit_mode = !background_edit_mode; }
             alert->flash = GuiCheckBox((Rectangle){ max_width,                   y+yHeight*1, width,          height }, "", alert->flash);
             if (GuiTextBox((Rectangle)            { max_width,                   y+yHeight*0, 400,            height }, alert->message, MESSAGE_SIZE, message_edit_mode)) { message_edit_mode = !message_edit_mode; }
         } EndDrawing();
@@ -257,10 +256,10 @@ bool make_alert_window(struct Alert *alert) {
 
     switch (text_color) {
     case 0:
-        alert->text_color = BLACK;
+        alert->text_color = WHITE;
         break;
     case 1:
-        alert->text_color = WHITE;
+        alert->text_color = BLACK;
         break;
     case 2:
         alert->text_color = RED;
