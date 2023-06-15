@@ -102,10 +102,10 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
         if (TextIsEqual(argv[arg_index], "message")) {
             TextCopy(alert->message, argv[++arg_index]);
         } else if (TextIsEqual(argv[arg_index], "background")) {
-            if (arg_index + 1 >= argc)
-                err_and_die("No color provided after 'background'\n");
-
             ++arg_index;
+            
+            if (arg_index >= argc)
+                err_and_die("No color provided after 'background'\n");
 
             if (TextIsEqual(argv[arg_index], "red"))
                 alert->background_color = RED;
@@ -119,14 +119,13 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
                 alert->background_color = BLACK;
             else if (TextIsEqual(argv[arg_index], "yellow"))
                 alert->background_color = YELLOW;
-            else {
+            else
                 err_and_die(TextFormat("Invalid background color: %s\n", argv[arg_index]));
-            }
         } else if (TextIsEqual(argv[arg_index], "text")) {
-            if (arg_index + 1 >= argc)
-                err_and_die("No color provided after 'text'\n");
-
             ++arg_index;
+            
+            if (arg_index >= argc)
+                err_and_die("No color provided after 'text'\n");
 
             if (TextIsEqual(argv[arg_index], "red"))
                 alert->text_color = RED;
@@ -140,9 +139,8 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
                 alert->text_color = BLACK;
             else if (TextIsEqual(argv[arg_index], "yellow"))
                 alert->text_color = YELLOW;
-            else {
+            else
                 err_and_die(TextFormat("Invalid text color: %s\n", argv[arg_index]));
-            }
         } else if (TextIsEqual(argv[arg_index], "flash")) {
             alert->flash = true;
         } else if (TextIsEqual(argv[arg_index], "sleep")) {
@@ -150,7 +148,9 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
                 err_and_die("malformed 'sleep' argument\n");
             }
 
-            int time = TextToInteger(argv[++arg_index]);
+            ++arg_index;
+
+            int time = TextToInteger(argv[arg_index]);
             if (time <= 0)
                 err_and_die(TextFormat("time should be a positive number but got: %d\n", time));
             alert->raw_time = time;
@@ -167,15 +167,16 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
             else if (TextIsEqual(argv[arg_index], "second") ||
                      TextIsEqual(argv[arg_index], "seconds"))
                 alert->raw_time_unit = SECOND;
-            else {
+            else
                 err_and_die(TextFormat("In for argument: You must choose between hour(s), minute(s), or second(s). Got: %s\n" , argv[arg_index]));
-            }
         } else {
             err_and_die(TextFormat("did not expect: %s\n", argv[arg_index]));
         }
     }
 }
 
+#define TOGGLE(var, func) do { if ((func)) var = !(var); } while(0)
+        
 bool make_alert_window(struct Alert *alert) {
     InitWindow(800, 600, "Make alert");
     SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()) / 6);
@@ -240,24 +241,13 @@ bool make_alert_window(struct Alert *alert) {
                 should_run = true;
                 break;
             }
-            
-            if (GuiValueBox(sleep_value_box, "", &alert->raw_time, 0, 1000, sleep_edit_mode))
-                sleep_edit_mode = !sleep_edit_mode;
-            
-            if (GuiDropdownBox(time_unit_dropdown, units, &which_unit, unit_edit_mode))
-                unit_edit_mode = !unit_edit_mode;
-            
-            if (GuiDropdownBox(text_color_dropdown, colors, &text_color, text_edit_mode))
-                text_edit_mode = !text_edit_mode;
-            
-            if (GuiDropdownBox(background_color_dropdown, colors, &background_color, background_edit_mode))
-                background_edit_mode = !background_edit_mode;
-            
+
+            TOGGLE(sleep_edit_mode,      GuiValueBox(sleep_value_box, "", &alert->raw_time, 0, 1000, sleep_edit_mode));
+            TOGGLE(unit_edit_mode,       GuiDropdownBox(time_unit_dropdown, units, &which_unit, unit_edit_mode));
+            TOGGLE(text_edit_mode,       GuiDropdownBox(text_color_dropdown, colors, &text_color, text_edit_mode));
+            TOGGLE(background_edit_mode, GuiDropdownBox(background_color_dropdown, colors, &background_color, background_edit_mode));
             alert->flash = GuiCheckBox(flash_checkbox, "", alert->flash);
-            
-            if (GuiTextBox(message_textbox, alert->message, MESSAGE_SIZE, message_edit_mode))
-                message_edit_mode = !message_edit_mode;
-            
+            TOGGLE(message_edit_mode,    GuiTextBox(message_textbox, alert->message, MESSAGE_SIZE, message_edit_mode));
         } EndDrawing();
     }
 
