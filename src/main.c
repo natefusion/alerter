@@ -54,22 +54,48 @@ char *time_unit_tostring(enum Time_Unit tu, bool is_plural) {
     switch (tu) {
     case SECOND:
         if (is_plural)
-            return "Seconds";
+            return "seconds";
         else
-            return "Second";
+            return "second";
     case MINUTE:
         if (is_plural)
-            return "Minutes";
+            return "minutes";
         else
-            return "Minute";
+            return "minute";
     case HOUR:
         if (is_plural)
-            return "Hours";
+            return "hours";
         else
-            return "Hour";
+            return "hour";
     default:
         return "";
     }
+}
+
+bool color_eq(Color *color1, Color *color2) {
+    bool a = color1->a == color2->a;
+    bool r = color1->r == color2->r;
+    bool g = color1->g == color2->g;
+    bool b = color1->b == color2->b;
+
+    return a && r && b && g;
+}
+
+char *color_tostring(Color *color) {
+    if (color_eq(&RED, color))
+        return "red";
+    if (color_eq(&GREEN, color))
+        return "green";
+    if (color_eq(&BLUE, color))
+        return "blue";
+    if (color_eq(&WHITE, color))
+        return "white";
+    if (color_eq(&BLACK, color))
+        return "black";
+    if (color_eq(&YELLOW, color))
+        return "yellow";
+    
+    return "";
 }
 
 #define MESSAGE_SIZE 255
@@ -90,7 +116,7 @@ struct Alert make_alert(void) {
     alert.background_color = RAYWHITE;
     alert.text_color = BLACK;
     alert.flash = false;
-    alert.raw_time = 0;
+    alert.raw_time = 1;
     alert.wants_to_sleep = false;
     alert.raw_time_unit = SECOND;
 
@@ -175,11 +201,41 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
     }
 }
 
+void gen_desktop_file(struct Alert *alert, const char *name) {
+    const char *filepath=
+        TextFormat("/home/nathan/.local/share/applications/%s.desktop", name);
+    
+    FILE *fp = fopen(filepath, "w");
+    if (!fp) err_and_die("Can't open file");
+
+    const char *desktop_file =
+        "[Desktop Entry]\n"   
+        "Version=1.0\n"
+        "Name=%s\n"
+        "GenericName=alerter\n"
+        "Type=Application\n"
+        "Exec=alerter message \"%s\" sleep %d %s background %s text %s %s\n"
+        "Terminal=false\n"
+        "Keywords=time;timer;alarm\n";
+
+    fprintf(fp,
+            desktop_file,
+            name,
+            alert->message,
+            alert->raw_time,
+            time_unit_tostring(alert->raw_time_unit, false),
+            color_tostring(&alert->background_color),
+            color_tostring(&alert->text_color),
+            alert->flash ? "flash" : "");
+
+    fclose(fp);
+}
+
 #define TOGGLE(var, func) do { if ((func)) var = !(var); } while(0)
-        
-bool make_alert_window(struct Alert *alert) {
+
+bool alert_window_editor(struct Alert *alert) {
     InitWindow(800, 600, "Make alert");
-    SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()) / 6);
+    SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()) / 2);
 
     int fontsize = 50;
     int width = fontsize;
@@ -189,6 +245,9 @@ bool make_alert_window(struct Alert *alert) {
     int x = 10;
 
     bool message_edit_mode = false;
+
+    char save_as_message[MESSAGE_SIZE];
+    bool save_as_edit_mode = false;
 
     const char *colors = "White;Black;Red;Green;Blue;Yellow";
     
@@ -209,7 +268,10 @@ bool make_alert_window(struct Alert *alert) {
     bool unit_edit_mode = false;
 
     bool should_run = false;
- 
+    bool should_save = false;
+
+    Rectangle save_as_button            = { x,                           y+yHeight*7, 200,            height };
+    Rectangle save_as_textbox           = { x+210,                       y+yHeight*7, 400,            height };
     Rectangle exit_button               = { x,                           y+yHeight*6, 100,            height };
     Rectangle run_button                = { x,                           y+yHeight*5, 100,            height };
     Rectangle sleep_value_box           = { max_width,                   y+yHeight*4, dropdown_width, height };
@@ -231,11 +293,16 @@ bool make_alert_window(struct Alert *alert) {
             DrawText("Background:", x, y+yHeight*2, fontsize, BLACK);
             DrawText("Flash:",      x, y+yHeight*1, fontsize, BLACK);
             DrawText("Message:",    x, y+yHeight*0, fontsize, BLACK);
-            
-            if (GuiButton(exit_button, "Exit")) {
-                should_run = false;
+
+            if (GuiButton(save_as_button, "Save as")) {
+                should_save = true;
                 break;
             }
+
+            TOGGLE(save_as_edit_mode, GuiTextBox(save_as_textbox, save_as_message, MESSAGE_SIZE, save_as_edit_mode));
+            
+            if (GuiButton(exit_button, "Exit"))
+                break;
             
             if (GuiButton(run_button, "Run")) {
                 should_run = true;
@@ -307,7 +374,30 @@ bool make_alert_window(struct Alert *alert) {
 
     CloseWindow();
 
+    if (should_save)
+        gen_desktop_file(alert, save_as_message);
+
     return should_run;
+}
+
+void pre_timer_window(struct Alert *alert) {
+    InitWindow(200, 100, "About to start ...");
+    int fps = GetMonitorRefreshRate(GetCurrentMonitor()) / 6;
+    SetTargetFPS(fps);
+
+    int frame = 0;
+    while (!WindowShouldClose()) {
+        if (frame >= fps)
+            break;
+
+        BeginDrawing(); {
+            ClearBackground(alert->background_color);
+            DrawTextCentered("Starting timer ...", 0, 0, 20, alert->text_color);
+            ++frame;
+        } EndDrawing();
+    }
+    
+    CloseWindow();
 }
 
 void alert_window(struct Alert *alert) {
@@ -322,7 +412,7 @@ void alert_window(struct Alert *alert) {
 
     alert->wants_to_sleep = false;
 
-    while(!WindowShouldClose()) {
+    while (!WindowShouldClose()) {
         BeginDrawing(); {
             if (alert->flash)
                 if (frame % fps == 0 || frame % (fps/2) == 0) {
@@ -360,8 +450,6 @@ void alert_window(struct Alert *alert) {
     }
 
     CloseWindow();
-    
-    return;
 }
 
 int main(int argc, char **argv) {
@@ -369,10 +457,12 @@ int main(int argc, char **argv) {
     struct Alert alert = make_alert();
 
     bool should_run = true;
-    if (argc > 1)
+    if (argc > 1) {
         parse_args(argc, argv, &alert);
-    else
-        should_run = make_alert_window(&alert);
+        pre_timer_window(&alert);
+    } else {
+        should_run = alert_window_editor(&alert);
+    }
 
     if (!should_run)
         return 0;
