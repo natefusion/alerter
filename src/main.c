@@ -387,12 +387,13 @@ void pre_timer_window(struct Alert *alert) {
 
     int frame = 0;
     while (!WindowShouldClose()) {
-        if (frame >= fps)
-            break;
-
         BeginDrawing(); {
+            if (frame >= fps)
+                break;
+            
             ClearBackground(alert->background_color);
             DrawTextCentered("Starting timer ...", 0, 0, 20, alert->text_color);
+
             ++frame;
         } EndDrawing();
     }
