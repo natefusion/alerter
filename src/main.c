@@ -309,7 +309,7 @@ bool alert_window_editor(struct Alert *alert) {
                 break;
             }
 
-            TOGGLE(sleep_edit_mode,      GuiValueBox(sleep_value_box, "", &alert->raw_time, 0, 1000, sleep_edit_mode));
+            TOGGLE(sleep_edit_mode,      GuiValueBox(sleep_value_box, "", &alert->raw_time, 1, 1000, sleep_edit_mode));
             TOGGLE(unit_edit_mode,       GuiDropdownBox(time_unit_dropdown, units, &which_unit, unit_edit_mode));
             TOGGLE(text_edit_mode,       GuiDropdownBox(text_color_dropdown, colors, &text_color, text_edit_mode));
             TOGGLE(background_edit_mode, GuiDropdownBox(background_color_dropdown, colors, &background_color, background_edit_mode));
@@ -471,7 +471,7 @@ int main(int argc, char **argv) {
     do {
         sleep(alert.raw_time * alert.raw_time_unit);
         alert_window(&alert);
-    } while (alert.wants_to_sleep && alert.raw_time > 0);
+    } while (alert.wants_to_sleep);
 
     return 0;
 }
