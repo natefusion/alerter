@@ -319,57 +319,27 @@ bool alert_window_editor(struct Alert *alert) {
     }
 
     switch (background_color) {
-    case 0:
-        alert->background_color = WHITE;
-        break;
-    case 1:
-        alert->background_color = BLACK;
-        break;
-    case 2:
-        alert->background_color = RED;
-        break;
-    case 3:
-        alert->background_color = GREEN;
-        break;
-    case 4:
-        alert->background_color = BLUE;
-        break;
-    case 5:
-        alert->background_color = YELLOW;
-        break;
+    case 0: alert->background_color = WHITE;  break;
+    case 1: alert->background_color = BLACK;  break;
+    case 2: alert->background_color = RED;    break;
+    case 3: alert->background_color = GREEN;  break;
+    case 4: alert->background_color = BLUE;   break;
+    case 5: alert->background_color = YELLOW; break;
     }
 
     switch (text_color) {
-    case 0:
-        alert->text_color = WHITE;
-        break;
-    case 1:
-        alert->text_color = BLACK;
-        break;
-    case 2:
-        alert->text_color = RED;
-        break;
-    case 3:
-        alert->text_color = GREEN;
-        break;
-    case 4:
-        alert->text_color = BLUE;
-        break;
-    case 5:
-        alert->text_color = YELLOW;
-        break;
+    case 0: alert->text_color = WHITE;  break;
+    case 1: alert->text_color = BLACK;  break;
+    case 2: alert->text_color = RED;    break;
+    case 3: alert->text_color = GREEN;  break;
+    case 4: alert->text_color = BLUE;   break;
+    case 5: alert->text_color = YELLOW; break;
     }
 
     switch (which_unit) {
-    case 0:
-        alert->raw_time_unit = MINUTE;
-        break;
-    case 1:
-        alert->raw_time_unit = HOUR;
-        break;
-    case 2:
-        alert->raw_time_unit = SECOND;
-        break;
+    case 0: alert->raw_time_unit = MINUTE; break;
+    case 1: alert->raw_time_unit = HOUR;   break;
+    case 2: alert->raw_time_unit = SECOND; break;
     }
 
     CloseWindow();
