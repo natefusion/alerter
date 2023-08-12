@@ -50,25 +50,12 @@ enum Time_Unit {
     HOUR = 3600,
 };
 
-char *time_unit_tostring(enum Time_Unit tu, bool is_plural) {
+const char *time_unit_tostring(enum Time_Unit tu, bool is_plural) {
     switch (tu) {
-    case SECOND:
-        if (is_plural)
-            return "seconds";
-        else
-            return "second";
-    case MINUTE:
-        if (is_plural)
-            return "minutes";
-        else
-            return "minute";
-    case HOUR:
-        if (is_plural)
-            return "hours";
-        else
-            return "hour";
-    default:
-        return "";
+    case SECOND: return is_plural ? "seconds" : "second";
+    case MINUTE: return is_plural ? "minutes" : "minute";
+    case HOUR:   return is_plural ? "hours"   : "hour";
+    default:     return "";
     }
 }
 
@@ -82,19 +69,12 @@ bool color_eq(Color *color1, Color *color2) {
 }
 
 char *color_tostring(Color *color) {
-    if (color_eq(&RED, color))
-        return "red";
-    if (color_eq(&GREEN, color))
-        return "green";
-    if (color_eq(&BLUE, color))
-        return "blue";
-    if (color_eq(&WHITE, color))
-        return "white";
-    if (color_eq(&BLACK, color))
-        return "black";
-    if (color_eq(&YELLOW, color))
-        return "yellow";
-    
+    if (color_eq(&RED,    color)) return "red";
+    if (color_eq(&GREEN,  color)) return "green";
+    if (color_eq(&BLUE,   color)) return "blue";
+    if (color_eq(&WHITE,  color)) return "white";
+    if (color_eq(&BLACK,  color)) return "black";
+    if (color_eq(&YELLOW, color)) return "yellow";  
     return "";
 }
 
@@ -127,56 +107,45 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
     for (int arg_index = 1; arg_index < argc; ++arg_index) {
         if (TextIsEqual(argv[arg_index], "message")) {
             TextCopy(alert->message, argv[++arg_index]);
+            
         } else if (TextIsEqual(argv[arg_index], "background")) {
             ++arg_index;
             
             if (arg_index >= argc)
                 err_and_die("No color provided after 'background'\n");
 
-            if (TextIsEqual(argv[arg_index], "red"))
-                alert->background_color = RED;
-            else if (TextIsEqual(argv[arg_index], "green"))
-                alert->background_color = GREEN;
-            else if (TextIsEqual(argv[arg_index], "blue"))
-                alert->background_color = BLUE;
-            else if (TextIsEqual(argv[arg_index], "white"))
-                alert->background_color = WHITE;
-            else if (TextIsEqual(argv[arg_index], "black"))
-                alert->background_color = BLACK;
-            else if (TextIsEqual(argv[arg_index], "yellow"))
-                alert->background_color = YELLOW;
-            else
-                err_and_die(TextFormat("Invalid background color: %s\n", argv[arg_index]));
+            if      (TextIsEqual(argv[arg_index], "red"))    alert->background_color = RED;
+            else if (TextIsEqual(argv[arg_index], "green"))  alert->background_color = GREEN;
+            else if (TextIsEqual(argv[arg_index], "blue"))   alert->background_color = BLUE;
+            else if (TextIsEqual(argv[arg_index], "white"))  alert->background_color = WHITE;
+            else if (TextIsEqual(argv[arg_index], "black"))  alert->background_color = BLACK;
+            else if (TextIsEqual(argv[arg_index], "yellow")) alert->background_color = YELLOW;
+            else err_and_die(TextFormat("Invalid background color: %s\n", argv[arg_index]));
+            
         } else if (TextIsEqual(argv[arg_index], "text")) {
             ++arg_index;
             
             if (arg_index >= argc)
                 err_and_die("No color provided after 'text'\n");
 
-            if (TextIsEqual(argv[arg_index], "red"))
-                alert->text_color = RED;
-            else if (TextIsEqual(argv[arg_index], "green"))
-                alert->text_color = GREEN;
-            else if (TextIsEqual(argv[arg_index], "blue"))
-                alert->text_color = BLUE;
-            else if (TextIsEqual(argv[arg_index], "white"))
-                alert->text_color = WHITE;
-            else if (TextIsEqual(argv[arg_index], "black"))
-                alert->text_color = BLACK;
-            else if (TextIsEqual(argv[arg_index], "yellow"))
-                alert->text_color = YELLOW;
-            else
-                err_and_die(TextFormat("Invalid text color: %s\n", argv[arg_index]));
+            if      (TextIsEqual(argv[arg_index], "red"))    alert->text_color = RED;
+            else if (TextIsEqual(argv[arg_index], "green"))  alert->text_color = GREEN;
+            else if (TextIsEqual(argv[arg_index], "blue"))   alert->text_color = BLUE;
+            else if (TextIsEqual(argv[arg_index], "white"))  alert->text_color = WHITE;
+            else if (TextIsEqual(argv[arg_index], "black"))  alert->text_color = BLACK;
+            else if (TextIsEqual(argv[arg_index], "yellow")) alert->text_color = YELLOW;
+            else err_and_die(TextFormat("Invalid text color: %s\n", argv[arg_index]));
+            
         } else if (TextIsEqual(argv[arg_index], "flash")) {
             alert->flash = true;
+            
         } else if (TextIsEqual(argv[arg_index], "sleep")) {
-            if (arg_index + 2 >= argc) {
+            if (arg_index + 2 >= argc)
                 err_and_die("malformed 'sleep' argument\n");
-            }
 
             ++arg_index;
 
-            int time = TextToInteger(argv[arg_index]);
+            const int time = TextToInteger(argv[arg_index]);
             if (time <= 0)
                 err_and_die(TextFormat("time should be a positive number but got: %d\n", time));
             alert->raw_time = time;
@@ -184,17 +153,11 @@ void parse_args(int argc, char **argv, struct Alert *alert) {
                                      
             ++arg_index;
             
-            if (TextIsEqual(argv[arg_index], "hour") ||
-                TextIsEqual(argv[arg_index], "hours"))
-                alert->raw_time_unit = HOUR;
-            else if (TextIsEqual(argv[arg_index], "minute") ||
-                     TextIsEqual(argv[arg_index], "minutes"))
-                alert->raw_time_unit = MINUTE;
-            else if (TextIsEqual(argv[arg_index], "second") ||
-                     TextIsEqual(argv[arg_index], "seconds"))
-                alert->raw_time_unit = SECOND;
-            else
-                err_and_die(TextFormat("In for argument: You must choose between hour(s), minute(s), or second(s). Got: %s\n" , argv[arg_index]));
+                 if (TextIsEqual(argv[arg_index], "hour")   || TextIsEqual(argv[arg_index], "hours"))   alert->raw_time_unit = HOUR;
+            else if (TextIsEqual(argv[arg_index], "minute") || TextIsEqual(argv[arg_index], "minutes")) alert->raw_time_unit = MINUTE;
+            else if (TextIsEqual(argv[arg_index], "second") || TextIsEqual(argv[arg_index], "seconds")) alert->raw_time_unit = SECOND;
+            else err_and_die(TextFormat("In for argument: You must choose between hour(s), minute(s), or second(s). Got: %s\n" , argv[arg_index]));
+                 
         } else {
             err_and_die(TextFormat("did not expect: %s\n", argv[arg_index]));
         }
@@ -237,12 +200,12 @@ bool alert_window_editor(struct Alert *alert) {
     InitWindow(800, 600, "Make alert");
     SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()) / 2);
 
-    int fontsize = 50;
-    int width = fontsize;
-    int height = fontsize;
-    int yHeight = fontsize+10;
-    int y = 10;
-    int x = 10;
+    const int fontsize = 50;
+    const int width = fontsize;
+    const int height = fontsize;
+    const int yHeight = fontsize+10;
+    const int y = 10;
+    const int x = 10;
 
     bool message_edit_mode = false;
 
@@ -251,9 +214,9 @@ bool alert_window_editor(struct Alert *alert) {
 
     const char *colors = "White;Black;Red;Green;Blue;Yellow";
     
-    int dropdown_width = MeasureText("Yellow", fontsize) + 15;
+    const int dropdown_width = MeasureText("Yellow", fontsize) + 15;
 
-    int max_width = MeasureText("Background:", fontsize) + 20;
+    const int max_width = MeasureText("Background:", fontsize) + 20;
     bool background_edit_mode = false;
     int background_color = 0;
 
@@ -263,23 +226,23 @@ bool alert_window_editor(struct Alert *alert) {
     bool sleep_edit_mode = false;
 
     const char *units = "Minutes;Hours;Seconds";
-    int unit_width = MeasureText("Seconds", fontsize) + 25;
+    const int unit_width = MeasureText("Seconds", fontsize) + 25;
     int which_unit = 0;
     bool unit_edit_mode = false;
 
     bool should_run = false;
     bool should_save = false;
 
-    Rectangle save_as_button            = { x,                           y+yHeight*7, 200,            height };
-    Rectangle save_as_textbox           = { x+210,                       y+yHeight*7, 400,            height };
-    Rectangle exit_button               = { x,                           y+yHeight*6, 100,            height };
-    Rectangle run_button                = { x,                           y+yHeight*5, 100,            height };
-    Rectangle sleep_value_box           = { max_width,                   y+yHeight*4, dropdown_width, height };
-    Rectangle time_unit_dropdown        = { max_width+dropdown_width+10, y+yHeight*4, unit_width,     height };
-    Rectangle text_color_dropdown       = { max_width,                   y+yHeight*3, dropdown_width, height };
-    Rectangle background_color_dropdown = { max_width,                   y+yHeight*2, dropdown_width, height };
-    Rectangle flash_checkbox            = { max_width,                   y+yHeight*1, width,          height };
-    Rectangle message_textbox           = { max_width,                   y+yHeight*0, 400,            height };
+    const Rectangle save_as_button            = { x,                           y+yHeight*7, 200,            height };
+    const Rectangle save_as_textbox           = { x+210,                       y+yHeight*7, 400,            height };
+    const Rectangle exit_button               = { x,                           y+yHeight*6, 100,            height };
+    const Rectangle run_button                = { x,                           y+yHeight*5, 100,            height };
+    const Rectangle sleep_value_box           = { max_width,                   y+yHeight*4, dropdown_width, height };
+    const Rectangle time_unit_dropdown        = { max_width+dropdown_width+10, y+yHeight*4, unit_width,     height };
+    const Rectangle text_color_dropdown       = { max_width,                   y+yHeight*3, dropdown_width, height };
+    const Rectangle background_color_dropdown = { max_width,                   y+yHeight*2, dropdown_width, height };
+    const Rectangle flash_checkbox            = { max_width,                   y+yHeight*1, width,          height };
+    const Rectangle message_textbox           = { max_width,                   y+yHeight*0, 400,            height };
 
     GuiSetStyle(DEFAULT, TEXT_SIZE, fontsize);
     GuiSetStyle(DEFAULT, TEXT_SPACING, 3);
@@ -418,6 +381,7 @@ void alert_window(struct Alert *alert) {
         } EndDrawing();
 
         ++frame;
+        frame %= fps; // overflow bad
     }
 
     CloseWindow();
