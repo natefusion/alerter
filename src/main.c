@@ -209,7 +209,7 @@ bool alert_window_editor(struct Alert *alert) {
 
     bool message_edit_mode = false;
 
-    char save_as_message[MESSAGE_SIZE];
+    char save_as_message[MESSAGE_SIZE] = {0};
     bool save_as_edit_mode = false;
 
     const char *colors = "White;Black;Red;Green;Blue;Yellow";
