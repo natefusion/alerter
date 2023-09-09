@@ -10,7 +10,7 @@
 
 const char *helpmsg =
     "NAME\n"
-    "\talerter - a very noticible alerter with timer\n"
+    "\talerter - a very noticeable alerter with timer\n"
     "\n"
     "OPTIONS:\n"
     "message [message]\n"
