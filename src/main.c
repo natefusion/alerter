@@ -17,7 +17,7 @@ const char *helpmsg =
     "\tThe message to say\n"
     "\n"
     "sleep [integer] [hour(s)|minute(s)|second(s)]\n"
-    "\t When should the program activate and if it should repeat\n"
+    "\t When should the program activate\n"
     "\n"
     "background [RED|GREEN|BLUE|WHITE|BLACK|YELLOW]\n"
     "\t Chooses a color for the background\n"
@@ -194,11 +194,11 @@ void gen_desktop_file(struct Alert *alert, const char *name) {
     fclose(fp);
 }
 
-#define TOGGLE(var, func) do { if ((func)) var = !(var); } while(0)
+#define TOGGLE(var, func) do { if ((func)) var = !(var); /* ooh scary! an unhygenic variable assignment! */ clear = true; } while(0)
 
 bool alert_window_editor(struct Alert *alert) {
     InitWindow(800, 600, "Make alert");
-    SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()) / 2);
+    SetTargetFPS(GetMonitorRefreshRate(GetCurrentMonitor()));
 
     const int fontsize = 50;
     const int width = fontsize;
@@ -233,6 +233,8 @@ bool alert_window_editor(struct Alert *alert) {
     bool should_run = false;
     bool should_save = false;
 
+    bool clear = false;
+
     const Rectangle save_as_button            = { x,                           y+yHeight*7, 200,            height };
     const Rectangle save_as_textbox           = { x+210,                       y+yHeight*7, 400,            height };
     const Rectangle exit_button               = { x,                           y+yHeight*6, 100,            height };
@@ -247,10 +249,18 @@ bool alert_window_editor(struct Alert *alert) {
     GuiSetStyle(DEFAULT, TEXT_SIZE, fontsize);
     GuiSetStyle(DEFAULT, TEXT_SPACING, 3);
 
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+    EndDrawing();
+
     while (!WindowShouldClose()) {
-        BeginDrawing(); {
-            ClearBackground(RAYWHITE);
-            
+        BeginDrawing();
+        {
+            if (clear) { // ooh efficiency
+                ClearBackground(RAYWHITE);
+                clear = false;
+            }
+
             DrawText("Sleep:",      x, y+yHeight*4, fontsize, BLACK);
             DrawText("Text:",       x, y+yHeight*3, fontsize, BLACK);
             DrawText("Background:", x, y+yHeight*2, fontsize, BLACK);
@@ -278,7 +288,9 @@ bool alert_window_editor(struct Alert *alert) {
             TOGGLE(background_edit_mode, GuiDropdownBox(background_color_dropdown, colors, &background_color, background_edit_mode));
             alert->flash = GuiCheckBox(flash_checkbox, "", alert->flash);
             TOGGLE(message_edit_mode,    GuiTextBox(message_textbox, alert->message, MESSAGE_SIZE, message_edit_mode));
-        } EndDrawing();
+
+        }
+        EndDrawing();
     }
 
     switch (background_color) {
@@ -319,6 +331,7 @@ void pre_timer_window(struct Alert *alert) {
     SetTargetFPS(fps);
 
     int frame = 0;
+    
     while (!WindowShouldClose()) {
         BeginDrawing(); {
             if (frame >= fps)
