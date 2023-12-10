@@ -319,8 +319,13 @@ bool alert_window_editor(struct Alert *alert) {
 
     CloseWindow();
 
-    if (should_save)
+    //                 is this an alright way to check if a string is empty?
+    if (should_save && save_as_message[0] != '\0')
         gen_desktop_file(alert, save_as_message);
+
+    if (save_as_message[0] == '\0') {
+        fprintf(stderr, "yeah im not saving nothing\n");
+    }
 
     return should_run;
 }
