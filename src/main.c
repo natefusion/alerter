@@ -1,12 +1,12 @@
-#include <raylib.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
 
+#include "raylib.h"
 #define RAYGUI_IMPLEMENTATION
-#include <raygui.h>
+#include "raygui.h"
 
 const char *helpmsg =
     "NAME\n"
@@ -286,7 +286,7 @@ bool alert_window_editor(struct Alert *alert) {
             TOGGLE(unit_edit_mode,       GuiDropdownBox(time_unit_dropdown, units, &which_unit, unit_edit_mode));
             TOGGLE(text_edit_mode,       GuiDropdownBox(text_color_dropdown, colors, &text_color, text_edit_mode));
             TOGGLE(background_edit_mode, GuiDropdownBox(background_color_dropdown, colors, &background_color, background_edit_mode));
-            alert->flash = GuiCheckBox(flash_checkbox, "", alert->flash);
+            GuiCheckBox(flash_checkbox, "", &alert->flash);
             TOGGLE(message_edit_mode,    GuiTextBox(message_textbox, alert->message, MESSAGE_SIZE, message_edit_mode));
 
         }

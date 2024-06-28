@@ -11,7 +11,7 @@ mkdir:
 SRC = $(wildcard src/*.c)
 CC = gcc
 FLAGS = -Wall -pipe
-FLAGS += -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+FLAGS += -I"$(CURDIR)/raylib-5.0/src/" -L"$(CURDIR)/target/raylib/" -I"$(CURDIR)/raygui-4.0/" -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 debug: OUTPUT = $(DEBUG)
 debug: FLAGS += -g
 # Non production ready flags (as of 2021-09-01), https://github.com/google/sanitizers/issues/1324: -fsanitize=pointer-compare -fsanitize=pointer-subtract
